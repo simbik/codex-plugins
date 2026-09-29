@@ -12,12 +12,18 @@ The distributed implementation is original App Publisher code. Candidate store M
 
 ## Limits
 
-Tests use generated keys and mock API responses. They do not prove store permission configuration, OAuth consent completion, successful real artifact processing, TestFlight access, Google review outcomes or public release. Artifact hashes do not prove identity/signing. The publisher has not supplied store credentials for a live test. No app has been uploaded, submitted or released during development.
+Tests use generated keys and mock API responses. They do not prove store permission configuration, OAuth consent completion, successful real artifact processing, TestFlight access, Google review outcomes or public release. Artifact hashes do not prove identity/signing. Read-only Apple access and Google token authentication have been verified with local credentials. Google Reporting discovery returned SERVICE_DISABLED until that API is enabled. No app has been uploaded, submitted or released during development.
 
-This is a bounded implementation review, not a comprehensive security audit. Filesystem credentials are plaintext with private permissions. Provider API schema changes and platform-specific browser behavior need ongoing validation. The browser wizard has a 15-minute lifetime and binds only to loopback.
+This is a bounded implementation review, not a comprehensive security audit. Filesystem credentials are plaintext with private permissions. Provider API schema changes and platform-specific browser behavior need ongoing validation. The browser wizard binds only to loopback and stays open until explicit shutdown.
 
 ## Release check, 2026-09-29
 
 22 automated tests passed on Node.js 24.14.0/macOS ARM64. All 44 MCP tools appeared over stdio. TypeScript checks/build, Codex plugin validation and all three skill validators passed. npm audit reported zero known vulnerabilities at the time of checking. The setup form was inspected in the Codex browser; Apple and Google missing-file errors were exercised. No provider login/consent or credential import was completed in that UI review.
 
 The packaged bootstrap also passed an MCP handshake from an unrelated working directory using a temporary runtime pointer. This covers Codex versions that leave plugin-root placeholders unexpanded. GitHub Actions independently passed the first 21-test suite on Node.js 22/Linux; the final 22-test run is linked from the release.
+
+## Connection fixes, 0.1.3
+
+Candidate credentials are validated before any persistence. Tests cover rejected Apple/Google replacements preserving the config and credential files, missing Team issuer, Reporting pagination, safe disabled-API diagnostics, explicit wizard shutdown and availability after 15 minutes. Google app discovery is exposed as a read-only MCP tool. New onboarding uses service accounts, with complete API/permission steps in the wizard and docs/access-setup.md. Existing OAuth profiles remain compatible for their previously granted scopes.
+
+The 0.1.3 check/build and 30-test suite passed on Node.js 24/macOS, including the built MCP transport with 45 tools. Plugin and modified skill validation passed. A real browser confirmed Apple API access and the specific Google Reporting SERVICE_DISABLED message. Dependency audit reported zero production advisories at this check.

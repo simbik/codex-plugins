@@ -56,13 +56,17 @@ test("setup explains saved-key failures and replacement without exposing provide
     });
     assert.match(duplicate.error, /Replace connection/);
     assert.equal(readFileSync(path, "utf8"), before);
-    t.mock.method(AppleClient.prototype, "request", async () => {
-      throw new ApiFailure(401);
-    });
+    const appleRequest = t.mock.method(
+      AppleClient.prototype,
+      "request",
+      async () => {
+        throw new ApiFailure(401);
+      },
+    );
     const rejected = await post("/check", { platform: "apple" });
     assert.match(rejected.error, /401/);
     assert.match(rejected.error, /Team|Individual/);
-    t.mock.method(AppleClient.prototype, "request", async () => {
+    appleRequest.mock.mockImplementation(async () => {
       throw new Error("SECRET_PROVIDER_BODY");
     });
     assert.doesNotMatch(
@@ -89,18 +93,22 @@ test("setup explains saved-key failures and replacement without exposing provide
       "verifyAuthentication",
       async () => {},
     );
-    t.mock.method(GoogleClient.prototype, "listReviews", async () => {
-      throw new ApiFailure(403);
-    });
-    const google = await post("/check", { platform: "google" });
-    assert.equal(google.status, 200);
-    assert.match(google.message, /credentials accepted/);
-    const app = await post("/check", {
-      platform: "google",
-      packageName: "com.example.app",
-    });
+    const googleApps = t.mock.method(
+      GoogleClient.prototype,
+      "listApps",
+      async () => {
+        throw new ApiFailure(403);
+      },
+    );
+    const app = await post("/check", { platform: "google" });
     assert.match(app.error, /403/);
     assert.match(app.error, /Play Console/);
+    googleApps.mock.mockImplementation(async () => [
+      { name: "apps/com.example", displayName: "Example" },
+    ]);
+    const google = await post("/check", { platform: "google" });
+    assert.equal(google.status, 200);
+    assert.equal(google.apps[0].name, "apps/com.example");
     const close = await post("/close", {});
     assert.equal(close.status, 200);
     assert.equal(server.listening, false);

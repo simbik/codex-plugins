@@ -2,7 +2,7 @@
 
 A local Codex plugin for Apple App Store Connect and Google Play Console. Connect accounts in a browser wizard, prepare localized listings, upload signed builds and screenshots, and stage testing or releases. One installation serves multiple apps and account profiles.
 
-**Own MCP server and direct store API clients.** No dependency on a third-party app-publishing MCP. Credentials stay outside Git on your computer. Version 0.1.2 is an early release with offline contract/security tests; live store publishing has not yet been verified.
+**Own MCP server and direct store API clients.** No dependency on a third-party app-publishing MCP. Credentials stay outside Git on your computer. Version 0.1.3 is an early release with offline contract/security tests; live store publishing has not yet been verified.
 
 ## Install
 
@@ -26,7 +26,7 @@ npm run configure
 node dist/cli.js setup
 ```
 
-The wizard provides direct console links and file selectors. Apple Key ID is inferred from the .p8 filename; team keys also need the Issuer ID from Apple's key page. Google supports a service account JSON or a Desktop OAuth client JSON followed by Google consent. No shared verified Google OAuth client is shipped yet, so the first connection cannot be universal one-click sign-in. Later sessions reuse the saved connection.
+The wizard verifies credentials with the store before saving. Failed verification preserves the existing connection. Apple Team keys require Issuer ID even for individual developer accounts. Google onboarding uses a service account JSON with Android Publisher API and Play Developer Reporting API enabled in the same project; the wizard lists apps without a package name. See the [complete API and permissions checklist](docs/access-setup.md) for direct links and exact console settings. Existing OAuth profiles remain usable for previously authorized operations, but new Desktop OAuth onboarding is no longer offered. Reporting discovery needs its own scope. The wizard stays open until Finish setup. No shared Google OAuth client is shipped.
 
 ![Connection wizard icon](assets/logo.png)
 

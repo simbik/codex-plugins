@@ -10,6 +10,13 @@ export class ApiFailure extends Error {
   constructor(
     public status?: number,
     public recovery?: Record<string, string>,
+    public reason?:
+      | "SERVICE_DISABLED"
+      | "ACCESS_TOKEN_SCOPE_INSUFFICIENT"
+      | "INVALID_CREDENTIALS",
+    public service?:
+      | "playdeveloperreporting.googleapis.com"
+      | "androidpublisher.googleapis.com",
   ) {
     super("Store request failed");
   }
@@ -25,8 +32,31 @@ export async function jsonRequest(
     signal: AbortSignal.timeout(30_000),
   });
   if (!response.ok) {
-    await response.body?.cancel();
-    throw new ApiFailure(response.status);
+    const failure = new ApiFailure(response.status);
+    // Preserve only allowlisted machine codes; provider text may contain credentials.
+    try {
+      const body = await response.json();
+      for (const detail of body?.error?.details ?? []) {
+        if (detail?.["@type"] !== "type.googleapis.com/google.rpc.ErrorInfo")
+          continue;
+        if (
+          ["SERVICE_DISABLED", "ACCESS_TOKEN_SCOPE_INSUFFICIENT"].includes(
+            detail.reason,
+          )
+        )
+          failure.reason = detail.reason;
+        if (
+          [
+            "playdeveloperreporting.googleapis.com",
+            "androidpublisher.googleapis.com",
+          ].includes(detail.metadata?.service)
+        )
+          failure.service = detail.metadata.service;
+      }
+    } catch {
+      /* Non-JSON errors still expose only status. */
+    }
+    throw failure;
   }
   if (response.status === 204) return {};
   return response.json();
@@ -36,7 +66,8 @@ export class AppleClient {
     private config: {
       keyId: string;
       issuerId?: string;
-      p8Path: string;
+      p8Path?: string;
+      privateKey?: string;
       keyType?: "TEAM" | "INDIVIDUAL";
     },
     private fetcher = fetch,
@@ -59,7 +90,9 @@ export class AppleClient {
       encode({ alg: "ES256", kid: this.config.keyId, typ: "JWT" }) +
       "." +
       encode(payload);
-    const key = createPrivateKey(readFileSync(this.config.p8Path));
+    const key = createPrivateKey(
+      this.config.privateKey ?? readFileSync(this.config.p8Path!),
+    );
     if (
       key.asymmetricKeyType !== "ec" ||
       key.asymmetricKeyDetails?.namedCurve !== "prime256v1"
@@ -173,17 +206,26 @@ export async function fileDigest(path: string, algorithm: "md5" | "sha256") {
 }
 export class GoogleClient {
   private auth: GoogleAuth | OAuth2Client;
+  private reportingAuth: GoogleAuth | OAuth2Client;
   constructor(
     config: {
       serviceAccountPath?: string;
+      serviceAccount?: {
+        type: string;
+        client_email: string;
+        private_key: string;
+        token_uri: string;
+      };
       clientId?: string;
       clientSecret?: string;
       refreshToken?: string;
     },
     private fetcher = fetch,
   ) {
-    if (config.serviceAccountPath) {
-      const key = JSON.parse(readFileSync(config.serviceAccountPath, "utf8"));
+    if (config.serviceAccountPath || config.serviceAccount) {
+      const key =
+        config.serviceAccount ??
+        JSON.parse(readFileSync(config.serviceAccountPath!, "utf8"));
       if (
         key.type !== "service_account" ||
         key.token_uri !== "https://oauth2.googleapis.com/token"
@@ -196,17 +238,75 @@ export class GoogleClient {
         },
         scopes: ["https://www.googleapis.com/auth/androidpublisher"],
       });
+      this.reportingAuth = new GoogleAuth({
+        credentials: {
+          client_email: key.client_email,
+          private_key: key.private_key,
+        },
+        scopes: ["https://www.googleapis.com/auth/playdeveloperreporting"],
+      });
     } else if (config.clientId && config.clientSecret && config.refreshToken) {
       const oauth = new OAuth2Client(config.clientId, config.clientSecret);
       oauth.setCredentials({ refresh_token: config.refreshToken });
       this.auth = oauth;
+      this.reportingAuth = oauth;
     } else throw new Error("Google credentials required");
   }
-  private async token() {
-    const value = await this.auth.getAccessToken();
-    const token = typeof value === "string" ? value : value?.token;
-    if (!token) throw new Error("No access token");
-    return token;
+  private async token(auth = this.auth) {
+    try {
+      const value = await auth.getAccessToken();
+      const token = typeof value === "string" ? value : value?.token;
+      if (!token) throw new ApiFailure(401, undefined, "INVALID_CREDENTIALS");
+      return token;
+    } catch (error) {
+      if (error instanceof ApiFailure) throw error;
+      const e = error as any;
+      if (
+        ["invalid_grant", "invalid_client", "unauthorized_client"].includes(
+          e.response?.data?.error,
+        )
+      )
+        throw new ApiFailure(401, undefined, "INVALID_CREDENTIALS");
+      // Never retain a GoogleAuth error with request headers or key material.
+      throw new ApiFailure(
+        typeof e.response?.status === "number" ? e.response.status : undefined,
+      );
+    }
+  }
+  async listApps(): Promise<Array<{ name: string; displayName: string }>> {
+    const apps: Array<{ name: string; displayName: string }> = [];
+    const seen = new Set<string>();
+    const token = await this.token(this.reportingAuth);
+    let pageToken = "";
+    do {
+      const url = new URL(
+        "https://playdeveloperreporting.googleapis.com/v1beta1/apps:search",
+      );
+      url.searchParams.set("pageSize", "1000");
+      if (pageToken) url.searchParams.set("pageToken", pageToken);
+      const page = await jsonRequest(
+        url.href,
+        { headers: { Authorization: "Bearer " + token } },
+        this.fetcher,
+      );
+      for (const app of page.apps ?? []) {
+        if (typeof app.name !== "string" || !app.name.startsWith("apps/"))
+          throw new ApiFailure();
+        apps.push({
+          name: app.name,
+          displayName:
+            typeof app.displayName === "string"
+              ? app.displayName
+              : app.name.slice(5),
+        });
+      }
+      pageToken = page.nextPageToken ?? "";
+      if (typeof pageToken !== "string" || (pageToken && seen.has(pageToken)))
+        throw new ApiFailure();
+      if (pageToken) seen.add(pageToken);
+      if (seen.size > 100) throw new ApiFailure();
+    } while (pageToken);
+    return apps;
   }
   async verifyAuthentication(): Promise<void> {
     await this.token();

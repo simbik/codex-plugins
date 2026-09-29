@@ -493,7 +493,7 @@ test("setup binds loopback and rejects CSRF, invalid callbacks and unauthenticat
     );
     assert.equal(
       (await fetch(u.origin + "/oauth/callback?state=bad&code=bad")).status,
-      400,
+      403,
     );
   } finally {
     await new Promise<void>((r) => server.close(() => r()));
@@ -547,39 +547,30 @@ test("Google REST requests encode params and never retry media uploads", async (
     rmSync(dir, { recursive: true, force: true });
   }
 });
-test("Google OAuth setup generates state and PKCE without returning client secret", async () => {
+test("setup rejects Desktop OAuth files with service-account guidance", async () => {
   const { server, url } = await startSetup(false);
+  const u = new URL(url);
   try {
-    const u = new URL(url);
-    const res = await fetch(u.origin + "/connect/google", {
+    const r = await fetch(u.origin + "/connect/google", {
       method: "POST",
       headers: {
         origin: u.origin,
         "x-setup-token": u.searchParams.get("token")!,
-        "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        profile: "test",
+        profile: "synthetic_unconfigured",
         key: JSON.stringify({
           installed: {
             client_id: "synthetic.apps.googleusercontent.com",
-            client_secret: "not-a-real-secret",
+            client_secret: "PRIVATE_SECRET",
           },
         }),
       }),
     });
-    assert.equal(res.status, 200);
-    const result = await res.json();
-    assert.doesNotMatch(JSON.stringify(result), /not-a-real-secret/);
-    const consent = new URL(result.url);
-    assert.equal(consent.origin, "https://accounts.google.com");
-    assert.equal(consent.searchParams.get("code_challenge_method"), "S256");
-    assert.ok(consent.searchParams.get("state"));
-    assert.ok(consent.searchParams.get("code_challenge"));
-    assert.equal(
-      consent.searchParams.get("redirect_uri"),
-      u.origin + "/oauth/callback",
-    );
+    const result = await r.json();
+    assert.equal(r.status, 400);
+    assert.match(result.error, /service account/);
+    assert.doesNotMatch(JSON.stringify(result), /PRIVATE_SECRET/);
   } finally {
     await new Promise<void>((r) => server.close(() => r()));
   }

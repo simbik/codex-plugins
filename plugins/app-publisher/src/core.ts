@@ -14,6 +14,12 @@ export function safeError(error: unknown) {
     error:
       "Store operation failed. Check account permissions, input and store state before retrying. The result may be ambiguous; do not blindly repeat writes.",
     ...(typeof status === "number" ? { status } : {}),
+    ...(error instanceof ApiFailure && error.reason
+      ? { reason: error.reason }
+      : {}),
+    ...(error instanceof ApiFailure && error.service
+      ? { service: error.service }
+      : {}),
     ...(error instanceof ApiFailure && error.recovery
       ? { recovery: error.recovery }
       : {}),

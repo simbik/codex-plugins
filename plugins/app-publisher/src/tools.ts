@@ -63,6 +63,13 @@ const readApple = (
   add(name, description, false, shape, (c, a) =>
     c.request(path(a), { params: params?.(a) }),
   );
+add(
+  "google_list_apps",
+  "List accessible Google apps using Play Developer Reporting API; requires that API enabled and reporting scope. Does not verify release permissions.",
+  false,
+  {},
+  (c) => c.listApps(),
+);
 readApple(
   "apple_list_apps",
   "List accessible Apple apps; follow links.next for further pages.",

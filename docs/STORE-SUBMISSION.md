@@ -17,7 +17,7 @@ Name: App Publisher
 
 Short description: Prepare and publish mobile app updates.
 
-Long description: Local workflows for store metadata, screenshots, signed builds and release preparation across Apple App Store Connect and Google Play Console. Includes a browser-based local connection wizard, account profiles and explicit write controls. Requires Node.js 22+, store API access and signed artifacts. The initial Google connection requires a service account or Desktop OAuth client file. Live production publishing has not yet been verified for this early release.
+Long description: Local workflows for store metadata, screenshots, signed builds and release preparation across Apple App Store Connect and Google Play Console. Includes a browser-based local connection wizard, account profiles and explicit write controls. Requires Node.js 22+, store API access and signed artifacts. The initial Google connection requires a service account JSON file. Live production publishing has not yet been verified for this early release.
 
 Category: Productivity
 
@@ -41,7 +41,7 @@ Release notes: First local release with an original MCP/CLI server, local connec
 Positive:
 1. Run setup without credentials: see direct console links and file selectors; no secrets requested in chat.
 2. Connect an Apple test account: select .p8, enter team Issuer ID, check API access, list apps with the explicit profile.
-3. Connect Google with a Desktop OAuth file: follow consent, return through the state-bound callback, reuse the saved refresh token.
+3. Connect Google with a service account JSON: enable Publisher and Reporting APIs, grant Play Console app permissions, verify discovery before saving. Confirm an invalid replacement leaves the old connection intact.
 4. Prepare a localized listing in a temporary Google edit: read existing listing, update reviewed copy, validate; no commit until authorized.
 5. Upload an authorized signed IPA: check hash, receive reservation IDs, inspect processing state; no automatic review submission.
 
