@@ -132,3 +132,13 @@ test("Google authentication can be checked without a package or reviews permissi
   (client as any).auth = { getAccessToken: async () => ({ token: null }) };
   await assert.rejects(() => (client as any).verifyAuthentication());
 });
+test('connection overview reports saved presence without claiming verification or returning credentials', async()=>{
+ const dir=mkdtempSync(join(tmpdir(),'publisher-overview-'));const path=join(dir,'config.json');const old=process.env.APP_PUBLISHER_CONFIG;process.env.APP_PUBLISHER_CONFIG=path;
+ saveConnection('default','apple','PRIVATE_KEY',{keyId:'PRIVATE_ID',issuerId:'PRIVATE_ISSUER',keyType:'TEAM'},false,path);
+ const {server,url}=await startSetup(false);const u=new URL(url);
+ try{
+  const r=await fetch(u.origin+'/connections',{method:'POST',headers:{origin:u.origin,'x-setup-token':u.searchParams.get('token')!},body:JSON.stringify({profile:'default'})});
+  assert.equal(r.status,200);const result=await r.json();assert.deepEqual(result,{apple:{saved:true},google:{saved:false}});assert.doesNotMatch(JSON.stringify(result),/PRIVATE|verified|p8Path/);
+  assert.equal((await fetch(u.origin+'/connections',{method:'POST',body:'{}'})).status,403);
+ }finally{await new Promise<void>(r=>server.close(()=>r()));if(old===undefined)delete process.env.APP_PUBLISHER_CONFIG;else process.env.APP_PUBLISHER_CONFIG=old;rmSync(dir,{recursive:true,force:true});}
+});

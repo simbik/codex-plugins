@@ -1,6 +1,6 @@
 {
   "name": "app-publisher",
-  "version": "0.1.4",
+  "version": "0.1.5",
   "description": "Local Codex workflows and MCP for Apple and Google app publishing",
   "author": {
     "name": "simbik",

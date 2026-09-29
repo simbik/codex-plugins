@@ -13,7 +13,7 @@ async function main() {
     return;
   }
   if (command === "serve") {
-    const server = new McpServer({ name: "app-publisher", version: "0.1.4" });
+    const server = new McpServer({ name: "app-publisher", version: "0.1.5" });
     for (const t of tools)
       server.registerTool(
         t.name,
