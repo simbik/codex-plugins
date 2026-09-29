@@ -45,7 +45,7 @@ Sources: [Publisher setup](https://developers.google.com/android-publisher/getti
 ## Apple: App Store Connect API
 
 1. Open [Users and Access → Integrations → App Store Connect API](https://appstoreconnect.apple.com/access/integrations/api). If **Request Access** appears, the Account Holder must request API access and personally accept Apple’s terms.
-2. For all current publishing workflows, create a **Team Key** with the **App Manager** role. This covers app management, metadata, builds, TestFlight, review submissions and releases. An existing **Admin** key also works; there is no need to replace a working key. Team keys can be created by the Account Holder or an Admin.
+2. For metadata, build and release workflows, create a **Team Key** with the **App Manager** role. This covers app management, metadata, builds, TestFlight, review submissions and releases. An existing **Admin** key also works; there is no need to replace a working key. Team keys can be created by the Account Holder or an Admin.
 3. Download the `.p8` file. Select **Team key** in the wizard. Key ID is inferred from the filename; copy **Issuer ID** from above the key list on the same Apple page.
 4. Click **Verify and save Apple**. The wizard verifies access by requesting the app list. A 401/403 leaves the previous connection intact.
 
@@ -53,6 +53,20 @@ Sources: [Publisher setup](https://developers.google.com/android-publisher/getti
 
 Team keys apply to every app on the team within the selected role and cannot be restricted to one app. To restrict app access, use an **Individual API Key** from an App Manager user with the intended app grants: user menu → **Edit Profile → Individual API Key**. Select Individual in the wizard and leave Issuer ID empty. If individual key creation is disabled, an Admin or Account Holder can restore that user’s Generate Individual API Keys permission.
 
-Current tools do not require separate In-App Purchase keys, subscription shared secrets or Finance access. An API key is not a signing certificate: uploads require an already signed `.ipa`. Signing and provisioning are outside this plugin. External TestFlight can require Beta App Review. A successful app-list request does not bypass Apple’s requirements for build status, agreements, listing completeness or app review.
+Current tools do not require separate In-App Purchase keys, subscription shared secrets or Finance access. An API key is not a signing certificate: uploads require an already signed `.ipa`. Provisioning preparation is available with a Team key and the permissions below; building and signing remain local build tasks. External TestFlight can require Beta App Review. A successful app-list request does not bypass Apple’s requirements for build status, agreements, listing completeness or app review.
 
 Sources: [Apple key creation and key types](https://developer.apple.com/help/app-store-connect/get-started/app-store-connect-api), [Apple roles](https://developer.apple.com/help/account/access/roles), [JWT fields for Team and Individual keys](https://developer.apple.com/documentation/appstoreconnectapi/generating-tokens-for-api-requests).
+
+## Apple provisioning permissions
+
+The new bundle ID, capability, certificate, device and profile commands require a **Team API key**. An Individual key cannot access these endpoints, regardless of the associated user's role. Do not replace a working key solely because new commands exist; check its permissions for the intended operation.
+
+For the full workflow including distribution certificate creation, use an **Admin Team key** created in [Users and Access → Integrations](https://appstoreconnect.apple.com/access/integrations/api). Apple reserves distribution certificate creation to Account Holder/Admin; Developer ID certificates can have additional Account Holder restrictions. Never grant Finance access for provisioning. A more limited key may be sufficient when certificates already exist and the intended endpoint permits it.
+
+For human users of an organization, an Account Holder/Admin can grant **Certificates, Identifiers & Profiles** access in [Users and Access](https://appstoreconnect.apple.com/access/users). App Manager/Developer roles alone do not guarantee that separate access. Users added to an individual developer's App Store Connect account are not members of that developer's Apple Developer Program team. The Account Holder must keep membership and agreements current.
+
+There is no separate Apple Cloud API switch. Use the local wizard to save the Team key and Issuer ID, then test the provisioning list commands required by the task. HTTP 403 on these endpoints can mean provisioning/role restrictions even when the app list works. Google requires no additional API for the browser-created public app card; the signed-in console user needs permission to create draft apps.
+
+See [first-app setup](first-app-setup.md) for automatic/browser versus manual creation and the certificate/profile workflow.
+
+Sources: [API key restrictions](https://developer.apple.com/documentation/appstoreconnectapi/creating-api-keys-for-app-store-connect-api), [certificate roles](https://developer.apple.com/help/account/certificates/certificates-overview), [App Manager access](https://developer.apple.com/help/glossary/app-manager/), [role matrix](https://developer.apple.com/help/account/access/roles).

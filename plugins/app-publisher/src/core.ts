@@ -31,7 +31,7 @@ export function publicResult(value: unknown): unknown {
     return Object.fromEntries(
       Object.entries(value).map(([k, v]) => [
         k,
-        /token|secret|password|authorization|private.?key|requestHeaders|uploadOperations/i.test(
+        /token|secret|password|authorization|private.?key|profileContent|certificateContent|csrContent|requestHeaders|uploadOperations/i.test(
           k,
         )
           ? "[REDACTED]"
@@ -102,6 +102,11 @@ export async function invoke(
     if (!(apple ? p.apple : p.google))
       return {
         error: "This platform is not configured for the selected profile.",
+      };
+    if (t.teamRequired && p.apple?.keyType === "INDIVIDUAL")
+      return {
+        error:
+          "Provisioning requires a Team API key with Certificates, Identifiers & Profiles access. Individual keys cannot use these endpoints.",
       };
     let client = options.client;
     if (!client) {

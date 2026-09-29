@@ -10,9 +10,10 @@ App Publisher implements its own MCP server and direct REST clients. It does not
 | Signed builds | IPA via Build Uploads API, SHA-256 | AAB/APK uploads, SHA-256 |
 | Testing | existing TestFlight groups, add build | testing tracks and Google Groups |
 | Release | draft review, attach version, submit, manual release | full track update, validate and commit edit |
+| First app | bundle IDs, capabilities, certificates, devices, profiles; browser/manual card creation | browser/manual card creation |
 | Credentials | team/individual .p8 key | service account onboarding; existing OAuth profiles supported |
 
-App name/subtitle edits, screenshot deletion/reordering, signing/provisioning, first-time app creation, IAP, pricing, banking, tax forms, automated compliance declarations and a hosted remote MCP service are outside 0.1.0. TestFlight external testing can require Beta App Review in the console. Google account and app setup must already be complete.
+App name/subtitle edits, screenshot deletion/reordering, building/signing binaries, IAP, pricing, banking, tax forms, automated compliance declarations and a hosted remote MCP service are outside this release. TestFlight external testing can require Beta App Review in the console. First-app setup is guided by [store-app-setup](../skills/store-app-setup/SKILL.md): choose automatic Codex in-app browser creation or manual instructions. Neither store offers public app-record creation through its publishing API. Google account and initial app setup must be complete before using the publishing edit workflow.
 
 Profile selection chooses an account; it is not an app-level security sandbox. Provider IAM remains the security boundary. Local workflows run with the user's filesystem access. Store tool responses include app metadata and identifiers and are visible to the AI host. Avoid placing sensitive data in metadata unless necessary.
 

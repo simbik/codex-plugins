@@ -15,7 +15,7 @@ Sources, checked 2026-09-29:
 
 Name: App Publisher
 
-Short description: Prepare and publish mobile app updates.
+Short description: Set up, prepare and publish mobile apps.
 
 Long description: Local workflows for store metadata, screenshots, signed builds and release preparation across Apple App Store Connect and Google Play Console. Includes a browser-based local connection wizard, account profiles and explicit write controls. Requires Node.js 22+, store API access and signed artifacts. The initial Google connection requires a service account JSON file. Live production publishing has not yet been verified for this early release.
 
@@ -59,3 +59,7 @@ Automated tests cover corresponding protocol and safety boundaries. Scenarios us
 3. Complete live review scenarios with controlled test apps and reviewer access.
 4. Upload the prepared release ZIP and listing assets through the agreed route, choose availability and complete required attestations.
 5. Submit for review. After approval, choose publication in the portal. Neither GitHub upload nor a draft is approval.
+
+## 0.1.6 additions
+
+First-app setup offers automatic operation in the Codex in-app browser or manual instructions, with login completed by the user. Automatic mode requires host browser tools. Fourteen Apple provisioning commands add bundle IDs, capabilities, certificates, devices and profiles. Provisioning API mutations and browser app creation have offline/workflow validation only; they have not created a live store record during development.

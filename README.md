@@ -53,3 +53,5 @@ npm test
 See [App Publisher validation](docs/VALIDATION.md) and its [capability boundaries](plugins/app-publisher/docs/capabilities.md). GitHub marketplace distribution is separate from the official OpenAI directory; see [submission status](docs/STORE-SUBMISSION.md).
 
 [MIT license](LICENSE) · [Privacy](PRIVACY.md) · [Terms](TERMS.md) · [Issues](https://github.com/simbik/codex-plugins/issues)
+
+App Publisher also guides first-app creation: choose automatic setup in the Codex in-app browser or manual instructions, with Apple provisioning through API tools. See the [first-app guide](plugins/app-publisher/docs/first-app-setup.md).

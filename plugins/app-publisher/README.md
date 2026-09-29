@@ -2,7 +2,7 @@
 
 A local Codex plugin for Apple App Store Connect and Google Play Console. Connect accounts in a browser wizard, prepare localized listings, upload signed builds and screenshots, and stage testing or releases. One installation serves multiple apps and account profiles.
 
-**Own MCP server and direct store API clients.** No dependency on a third-party app-publishing MCP. Credentials stay outside Git on your computer. Version 0.1.5 is an early release with offline contract/security tests; live store publishing has not yet been verified.
+**Own MCP server and direct store API clients.** No dependency on a third-party app-publishing MCP. Credentials stay outside Git on your computer. Version 0.1.6 is an early release with offline contract/security tests; live store publishing has not yet been verified.
 
 ## Install
 
@@ -38,7 +38,7 @@ The wizard verifies credentials with the store before saving. Failed verificatio
 - **Release:** staged App Review submission, approved manual Apple release, Google edit validation and commit. Google commits refuse to cancel an existing review.
 - **Control:** explicit account profile on every call, writes disabled by default, confirmation on each mutation, retained IDs after ambiguous upload failures.
 
-Preparing a release does not imply authorization to publish. A successful upload does not mean store approval or public availability. Account enrollment, banking, app creation, signing, IAP and many compliance forms remain outside this release. See [capabilities](docs/capabilities.md).
+Preparing a release does not imply authorization to publish. A successful upload does not mean store approval or public availability. Account enrollment, banking, binary signing, IAP and many compliance forms remain outside this release. See [capabilities](docs/capabilities.md).
 
 ## Documentation
 
@@ -67,3 +67,9 @@ Contributions and issues: https://github.com/simbik/codex-plugins/issues. Do not
 ## Distribution status
 
 Public GitHub marketplace distribution is separate from the official OpenAI plugin directory. App Publisher is **not yet submitted to or accepted in the official directory**. The current public submission route requires HTTPS for MCP; this release is local stdio and needs OpenAI's local-MCP support path. See the submission dossier for exact remaining steps.
+
+## New app setup
+
+Ask Codex to create a new store app. The **store-app-setup** skill offers **Create automatically in the Codex browser** or **Show me the instructions**. Automatic mode uses the host's in-app browser tools and asks you to sign in there if needed; manual mode gives direct links and exact field values. Both verify the result afterwards and keep draft creation separate from publishing.
+
+Apple preparation includes 14 provisioning tools for bundle IDs, capabilities, certificates, test devices and profiles. Certificate/profile downloads stay on disk; signing private keys are never requested in chat. See [first-app setup](docs/first-app-setup.md) and [permissions](docs/access-setup.md#apple-provisioning-permissions).

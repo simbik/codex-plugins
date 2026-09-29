@@ -1,3 +1,4 @@
+import { provisioningTools } from "./provisioning.js";
 import { z } from "zod";
 import { statSync } from "node:fs";
 import { basename, extname, isAbsolute } from "node:path";
@@ -6,6 +7,7 @@ export interface Tool {
   name: string;
   description: string;
   write: boolean;
+  teamRequired?: boolean;
   schema: z.AnyZodObject;
   handler: (client: any, args: any) => Promise<any>;
 }
@@ -625,3 +627,5 @@ add(
       body: { googleGroups: a.googleGroups },
     }),
 );
+
+tools.push(...provisioningTools);

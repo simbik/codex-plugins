@@ -16,3 +16,5 @@ Google: create or verify an edit, inspect existing bundles/APKs and tracks, uplo
 Provide a release plan containing identifiers, artifact hash, locale changes, exact audience/track and rollout values before irreversible external actions. When already authorized, execute it and read back state. Recovery responses may contain reservation IDs: retain them and inspect before another upload. No automatic destructive cleanup.
 
 Report uploaded, processing, testing, submitted, approved and publicly available as separate states. The current plugin has no live credential test history bundled into its release. Console-only gaps and supported operations are listed in [capabilities](../../docs/capabilities.md).
+
+For a new app without a store record, follow [store-app-setup](../store-app-setup/SKILL.md). Ask once whether to create the card automatically in the Codex in-app browser or provide manual instructions, unless the user already chose. Browser login is separate from API credentials. Use supported Apple provisioning tools for preparation; never silently choose a browser mode.
