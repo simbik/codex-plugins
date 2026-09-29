@@ -2,6 +2,7 @@
 """Build a deterministic plugin ZIP from explicit public package paths."""
 import argparse
 import hashlib
+import json
 from pathlib import Path
 from zipfile import ZipFile, ZipInfo, ZIP_DEFLATED
 
@@ -16,7 +17,8 @@ args.output.mkdir(parents=True, exist_ok=True)
 paths = ['.codex-plugin', '.mcp.json', 'skills', 'scripts', 'assets', 'docs',
          'src', 'dist', 'tests', 'package.json', 'package-lock.json', 'tsconfig.json',
          'LICENSE', 'PRIVACY.md', 'TERMS.md', 'README.md']
-archive = args.output / 'app-publisher-0.1.0.zip'
+version = json.loads((plugin / 'package.json').read_text())['version']
+archive = args.output / f'app-publisher-{version}.zip'
 with ZipFile(archive, 'w', ZIP_DEFLATED) as out:
     for relative in sorted(paths):
         root = plugin / relative

@@ -1,6 +1,6 @@
 {
   "name": "app-publisher",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Local Codex workflows and MCP for Apple and Google app publishing",
   "author": {
     "name": "simbik",
@@ -22,15 +22,15 @@
       "Prepare localized store descriptions.",
       "Prepare a signed build for internal testing."
     ],
-    "websiteURL": "https://github.com/simbik/app-publisher",
-    "privacyPolicyURL": "https://github.com/simbik/app-publisher/blob/main/PRIVACY.md",
-    "termsOfServiceURL": "https://github.com/simbik/app-publisher/blob/main/TERMS.md",
+    "websiteURL": "https://github.com/simbik/codex-plugins",
+    "privacyPolicyURL": "https://github.com/simbik/codex-plugins/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/simbik/codex-plugins/blob/main/TERMS.md",
     "logo": "./assets/logo.png",
     "composerIcon": "./assets/logo.png"
   },
   "mcpServers": "./.mcp.json",
-  "homepage": "https://github.com/simbik/app-publisher",
-  "repository": "https://github.com/simbik/app-publisher.git",
+  "homepage": "https://github.com/simbik/codex-plugins",
+  "repository": "https://github.com/simbik/codex-plugins.git",
   "license": "MIT",
   "keywords": [
     "apple",

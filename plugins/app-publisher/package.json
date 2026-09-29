@@ -1,6 +1,6 @@
 {
   "name": "@simbik/app-publisher",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Local Codex workflows and MCP for Apple and Google app publishing",
   "type": "module",
   "main": "dist/cli.js",
@@ -25,11 +25,11 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/simbik/app-publisher.git"
+    "url": "https://github.com/simbik/codex-plugins.git"
   },
-  "homepage": "https://github.com/simbik/app-publisher",
+  "homepage": "https://github.com/simbik/codex-plugins",
   "bugs": {
-    "url": "https://github.com/simbik/app-publisher/issues"
+    "url": "https://github.com/simbik/codex-plugins/issues"
   },
   "engines": {
     "node": ">=22"

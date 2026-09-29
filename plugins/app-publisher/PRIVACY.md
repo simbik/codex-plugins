@@ -6,4 +6,4 @@ The AI host receives requested app metadata, resource identifiers and operation 
 
 Dependency installation contacts the npm registry. Opening console links contacts the corresponding provider. The setup wizard contains no remote scripts, fonts or analytics. Replacing a connection retains old credential files locally; delete obsolete files and revoke old credentials deliberately. Removing the plugin does not automatically remove the separate credentials directory.
 
-To report a problem, use the GitHub issue tracker without keys, account documents, private app data or raw OAuth logs: https://github.com/simbik/app-publisher/issues
+To report a problem, use the GitHub issue tracker without keys, account documents, private app data or raw OAuth logs: https://github.com/simbik/codex-plugins/issues

@@ -23,10 +23,10 @@ Category: Productivity
 
 Public publisher handle: simbik. This is a GitHub handle, not proof of a verified OpenAI publisher identity. The owner must select their verified identity in the portal.
 
-Website/source: https://github.com/simbik/app-publisher
-Support: https://github.com/simbik/app-publisher/issues
-Privacy: https://github.com/simbik/app-publisher/blob/main/PRIVACY.md
-Terms: https://github.com/simbik/app-publisher/blob/main/TERMS.md
+Website/source: https://github.com/simbik/codex-plugins
+Support: https://github.com/simbik/codex-plugins/issues
+Privacy: https://github.com/simbik/codex-plugins/blob/main/PRIVACY.md
+Terms: https://github.com/simbik/codex-plugins/blob/main/TERMS.md
 Logo: plugins/app-publisher/assets/logo.png
 
 Starter prompts:

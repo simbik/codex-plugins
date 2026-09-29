@@ -1,53 +1,44 @@
-# App Publisher
+# Simbik Plugins
 
-A local Codex plugin for Apple App Store Connect and Google Play Console. Connect accounts in a browser wizard, prepare localized listings, upload signed builds and screenshots, and stage testing or releases. One installation serves multiple apps and account profiles.
+A Git-backed marketplace of independent Codex plugins. Connect this repository once, then install the plugins you need. Each plugin keeps its own name, version, skills and runtime.
 
-**Own MCP server and direct store API clients.** No dependency on a third-party app-publishing MCP. Credentials stay outside Git on your computer. Version 0.1.0 is an early release with offline contract/security tests; live store publishing has not yet been verified.
-
-## Install
-
-Requires Codex with plugin support, Node.js 22+ and npm.
+## Install the marketplace
 
 ```sh
-codex plugin marketplace add simbik/app-publisher
-codex plugin add app-publisher@app-publisher
+codex plugin marketplace add simbik/codex-plugins
 ```
 
-Start a new Codex task and ask: **“Use App Publisher to connect my Apple and Google accounts.”** The setup skill installs locked dependencies, builds the local server, and opens the connection wizard. The initial MCP startup may report that setup is required; the setup skill remains usable. Start another task after the build to load MCP tools.
+## Available plugins
 
-For a source checkout:
+| Plugin | Purpose | Install |
+| --- | --- | --- |
+| [App Publisher](plugins/app-publisher/README.md) | Local Apple App Store Connect and Google Play workflows: account setup, metadata, signed uploads and staged releases | `codex plugin add app-publisher@simbik` |
+
+The selector is `plugin-name@marketplace-name`. The marketplace ID is `simbik`; its display name is **Simbik Plugins**. The GitHub repository is `simbik/codex-plugins`.
+
+After installing App Publisher, start a new Codex task and ask it to open the account connection wizard. Node.js 22+ and npm are required. The setup skill installs locked dependencies, builds the server and configures the local launcher. Store credentials stay outside the repository.
+
+## Existing installations
+
+If you installed the former `app-publisher` marketplace, migrate with:
 
 ```sh
-git clone https://github.com/simbik/app-publisher.git
-cd app-publisher/plugins/app-publisher
-npm ci --ignore-scripts
-npm run build
-npm run configure
-node dist/cli.js setup
+codex plugin marketplace add simbik/codex-plugins
+codex plugin add app-publisher@simbik
+codex plugin remove app-publisher@app-publisher
+codex plugin marketplace remove app-publisher
 ```
 
-The wizard provides direct console links and file selectors. Apple Key ID is inferred from the .p8 filename; team keys also need the Issuer ID from Apple's key page. Google supports a service account JSON or a Desktop OAuth client JSON followed by Google consent. No shared verified Google OAuth client is shipped yet, so the first connection cannot be universal one-click sign-in. Later sessions reuse the saved connection.
+Then run the App Publisher setup skill in a new task to build/configure the new installation. Existing account profiles remain in their separate local configuration directory; they do not need to be recreated.
 
-![Connection wizard icon](plugins/app-publisher/assets/logo.png)
+## Repository layout
 
-## What it does
+- `.agents/plugins/marketplace.json` lists the plugins.
+- `plugins/<plugin-name>/` contains each independent plugin and its `.codex-plugin/plugin.json`.
+- `docs/` contains validation and publishing notes for App Publisher.
+- `scripts/package.py` packages the App Publisher release.
 
-- **Read:** apps, versions, builds, upload/review state, listings, edits and tracks.
-- **Prepare:** version localizations, Play descriptions, screenshots and tester groups.
-- **Upload:** signed IPA, AAB and APK files with SHA-256 checks.
-- **Release:** staged App Review submission, approved manual Apple release, Google edit validation and commit. Google commits refuse to cancel an existing review.
-- **Control:** explicit account profile on every call, writes disabled by default, confirmation on each mutation, retained IDs after ambiguous upload failures.
-
-Preparing a release does not imply authorization to publish. A successful upload does not mean store approval or public availability. Account enrollment, banking, app creation, signing, IAP and many compliance forms remain outside this release. See [capabilities](plugins/app-publisher/docs/capabilities.md).
-
-## Documentation
-
-- [Connection and configuration](plugins/app-publisher/docs/configuration.md)
-- [Metadata skill](plugins/app-publisher/skills/store-metadata/SKILL.md)
-- [Release skill](plugins/app-publisher/skills/store-release/SKILL.md)
-- [Privacy](PRIVACY.md), [terms](TERMS.md), [MIT license](LICENSE)
-- [Validation and review scope](docs/VALIDATION.md)
-- [Official directory submission status](docs/STORE-SUBMISSION.md)
+To add another plugin, give it a separate directory and manifest, add an entry to the catalog, and document its setup and permissions. Never commit credentials or real user data.
 
 ## Development
 
@@ -57,13 +48,8 @@ npm ci --ignore-scripts
 npm run check
 npm run build
 npm test
-npm audit
 ```
 
-All automated tests use synthetic local files and mocked store responses; no store credentials are required. The MCP smoke test launches the compiled server. Pin dependency upgrades in package-lock.json and review API contract changes. Never put keys, downloaded credentials, signed builds or real app metadata into commits or test fixtures.
+See [App Publisher validation](docs/VALIDATION.md) and its [capability boundaries](plugins/app-publisher/docs/capabilities.md). GitHub marketplace distribution is separate from the official OpenAI directory; see [submission status](docs/STORE-SUBMISSION.md).
 
-Contributions and issues: https://github.com/simbik/app-publisher/issues. Do not include secrets in reports.
-
-## Distribution status
-
-Public GitHub marketplace distribution is separate from the official OpenAI plugin directory. App Publisher is **not yet submitted to or accepted in the official directory**. The current public submission route requires HTTPS for MCP; this release is local stdio and needs OpenAI's local-MCP support path. See the submission dossier for exact remaining steps.
+[MIT license](LICENSE) · [Privacy](PRIVACY.md) · [Terms](TERMS.md) · [Issues](https://github.com/simbik/codex-plugins/issues)
