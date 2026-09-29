@@ -1,0 +1,41 @@
+{
+  "name": "app-publisher",
+  "version": "0.1.0",
+  "description": "Local Codex workflows and MCP for Apple and Google app publishing",
+  "author": {
+    "name": "simbik",
+    "url": "https://github.com/simbik"
+  },
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "App Publisher",
+    "shortDescription": "Prepare and publish mobile app updates.",
+    "longDescription": "Local workflows for store metadata, screenshots, signed builds and release preparation across Apple App Store Connect and Google Play Console. Credentials stay on your computer. Requires Node.js and store API access.",
+    "developerName": "simbik",
+    "category": "Productivity",
+    "capabilities": [
+      "Read",
+      "Write"
+    ],
+    "defaultPrompt": [
+      "Check the release status of my app.",
+      "Prepare localized store descriptions.",
+      "Prepare a signed build for internal testing."
+    ],
+    "websiteURL": "https://github.com/simbik/app-publisher",
+    "privacyPolicyURL": "https://github.com/simbik/app-publisher/blob/main/PRIVACY.md",
+    "termsOfServiceURL": "https://github.com/simbik/app-publisher/blob/main/TERMS.md",
+    "logo": "./assets/logo.png",
+    "composerIcon": "./assets/logo.png"
+  },
+  "mcpServers": "./.mcp.json",
+  "homepage": "https://github.com/simbik/app-publisher",
+  "repository": "https://github.com/simbik/app-publisher.git",
+  "license": "MIT",
+  "keywords": [
+    "apple",
+    "google-play",
+    "app-store-connect",
+    "publishing"
+  ]
+}

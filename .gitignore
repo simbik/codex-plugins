@@ -1,0 +1,16 @@
+node_modules/
+dist/
+.env
+.env.*
+*.p8
+*.pem
+*.key
+*.ipa
+*.aab
+*.apk
+*service-account*.json
+credentials*.json
+config.local.json
+*.log
+.DS_Store
+work/

@@ -1,0 +1,20 @@
+{
+  "name": "app-publisher",
+  "interface": {
+    "displayName": "App Publisher"
+  },
+  "plugins": [
+    {
+      "name": "app-publisher",
+      "source": {
+        "source": "local",
+        "path": "./plugins/app-publisher"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}

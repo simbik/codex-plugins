@@ -1,0 +1,49 @@
+{
+  "name": "@simbik/app-publisher",
+  "version": "0.1.0",
+  "description": "Local Codex workflows and MCP for Apple and Google app publishing",
+  "type": "module",
+  "main": "dist/cli.js",
+  "bin": {
+    "app-publisher": "dist/cli.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "check": "tsc --noEmit",
+    "test": "node --import tsx --test tests/*.test.ts",
+    "start": "node dist/cli.js serve"
+  },
+  "keywords": [
+    "codex-plugin",
+    "mcp",
+    "app-store-connect",
+    "google-play",
+    "publishing"
+  ],
+  "author": "simbik",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/simbik/app-publisher.git"
+  },
+  "homepage": "https://github.com/simbik/app-publisher",
+  "bugs": {
+    "url": "https://github.com/simbik/app-publisher/issues"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "1.30.0",
+    "google-auth-library": "11.0.2",
+    "zod": "3.25.76",
+    "zod-to-json-schema": "3.25.1"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.1",
+    "prettier": "3.9.9",
+    "tsx": "4.23.12",
+    "typescript": "5.9.3"
+  },
+  "private": true
+}
