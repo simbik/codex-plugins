@@ -2,7 +2,7 @@
 
 A local Codex plugin for Apple App Store Connect and Google Play Console. Connect accounts in a browser wizard, prepare localized listings, upload signed builds and screenshots, and stage testing or releases. One installation serves multiple apps and account profiles.
 
-**Own MCP server and direct store API clients.** No dependency on a third-party app-publishing MCP. Credentials stay outside Git on your computer. Version 0.1.1 is an early release with offline contract/security tests; live store publishing has not yet been verified.
+**Own MCP server and direct store API clients.** No dependency on a third-party app-publishing MCP. Credentials stay outside Git on your computer. Version 0.1.2 is an early release with offline contract/security tests; live store publishing has not yet been verified.
 
 ## Install
 

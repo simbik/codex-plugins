@@ -208,6 +208,9 @@ export class GoogleClient {
     if (!token) throw new Error("No access token");
     return token;
   }
+  async verifyAuthentication(): Promise<void> {
+    await this.token();
+  }
   async request(path: string, options: RequestOptions = {}) {
     if (!path.startsWith("/applications/"))
       throw new Error("Invalid Google path");

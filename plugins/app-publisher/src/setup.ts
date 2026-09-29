@@ -1,5 +1,10 @@
 import { createServer, type IncomingMessage } from "node:http";
-import { randomBytes, randomUUID, createHash } from "node:crypto";
+import {
+  randomBytes,
+  randomUUID,
+  createHash,
+  createPrivateKey,
+} from "node:crypto";
 import {
   mkdirSync,
   writeFileSync,
@@ -12,8 +17,9 @@ import { dirname, join } from "node:path";
 import { execFile } from "node:child_process";
 import { OAuth2Client, CodeChallengeMethod } from "google-auth-library";
 import { configPath, loadConfig, configSchema } from "./config.js";
-import { AppleClient } from "./api.js";
+import { AppleClient, ApiFailure } from "./api.js";
 import { GoogleClient } from "./api.js";
+class SetupFailure extends Error {}
 export function validateServiceAccount(x: any) {
   if (
     x?.type !== "service_account" ||
@@ -43,12 +49,16 @@ export function saveConnection(
   path = configPath(),
 ) {
   if (!/^[a-zA-Z0-9_-]{1,64}$/.test(profile))
-    throw new Error("Invalid profile name");
+    throw new SetupFailure(
+      "Use 1–64 letters, numbers, underscores or hyphens for the profile name.",
+    );
   const config = existsSync(path)
     ? loadConfig(path)
     : ({ profiles: {} } as any);
   if (config.profiles[profile]?.[platform] && !replace)
-    throw new Error("Profile already connected; choose Replace connection");
+    throw new SetupFailure(
+      "This profile already has a saved connection. Select Replace connection to save the new key. Check access uses the saved connection.",
+    );
   const folder = dirname(path);
   mkdirSync(folder, { recursive: true, mode: 0o700 });
   chmodSync(folder, 0o700);
@@ -174,19 +184,53 @@ export async function startSetup(open = true) {
       )
         return reply(403, { error: "Forbidden" });
       const data = await body(req);
+      if (url.pathname === "/close") {
+        reply(200, {
+          message: "Setup closed. Saved connections are ready to use.",
+        });
+        server.close();
+        return;
+      }
       if (url.pathname === "/connect/apple") {
         if (
           typeof data.key !== "string" ||
           !data.key.includes("BEGIN PRIVATE KEY")
         )
           return reply(400, { error: "Select an Apple .p8 private key file." });
+        let privateKey;
+        try {
+          privateKey = createPrivateKey(data.key);
+        } catch {
+          throw new SetupFailure(
+            "The .p8 file is not a valid private key. Select the downloaded Apple API key.",
+          );
+        }
+        if (
+          privateKey.asymmetricKeyType !== "ec" ||
+          privateKey.asymmetricKeyDetails?.namedCurve !== "prime256v1"
+        )
+          throw new SetupFailure("Select an Apple P-256 API key (.p8).");
+        if (typeof data.keyId !== "string" || !data.keyId.trim())
+          throw new SetupFailure(
+            "Enter the Key ID belonging to the selected .p8 file.",
+          );
+        if (!["TEAM", "INDIVIDUAL"].includes(data.keyType))
+          throw new SetupFailure("Select Team or Individual API key type.");
+        if (
+          data.keyType === "TEAM" &&
+          (typeof data.issuerId !== "string" || !data.issuerId.trim())
+        )
+          throw new SetupFailure(
+            "Team keys need the Issuer ID from App Store Connect → Users and Access → Integrations.",
+          );
         saveConnection(
           data.profile,
           "apple",
           data.key,
           {
-            keyId: data.keyId,
-            issuerId: data.issuerId || undefined,
+            keyId: data.keyId.trim(),
+            issuerId:
+              data.keyType === "TEAM" ? data.issuerId.trim() : undefined,
             keyType: data.keyType,
           },
           data.replace,
@@ -246,8 +290,13 @@ export async function startSetup(open = true) {
         });
       }
       if (url.pathname === "/check") {
-        const p = loadConfig().profiles[data.profile];
-        if (!p) throw new Error();
+        const p = existsSync(configPath())
+          ? loadConfig().profiles[data.profile]
+          : undefined;
+        if (!p || !p[data.platform as "apple" | "google"])
+          throw new SetupFailure(
+            "Save or Connect this store for the selected profile first. Check access uses the saved connection.",
+          );
         if (data.platform === "apple" && p.apple) {
           await new AppleClient(p.apple).request("/apps", {
             params: { limit: "1" },
@@ -255,20 +304,26 @@ export async function startSetup(open = true) {
           return reply(200, { message: "Apple API access verified." });
         }
         if (data.platform === "google" && p.google) {
-          if (
-            !/^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$/.test(
-              data.packageName,
-            )
-          )
-            return reply(400, {
-              error: "Enter an existing Android package name.",
-            });
           const client = new GoogleClient(
             "oauthTokenPath" in p.google
               ? JSON.parse(readFileSync(p.google.oauthTokenPath, "utf8"))
               : p.google,
           );
-          await client.listReviews(data.packageName, undefined, 1);
+          await client.verifyAuthentication();
+          if (!data.packageName?.trim())
+            return reply(200, {
+              message:
+                "Google credentials accepted. Connection works. Optionally enter an existing Android package to check Play API and reviews access; release permissions have not been checked.",
+            });
+          if (
+            !/^[A-Za-z][A-Za-z0-9_]*(\.[A-Za-z][A-Za-z0-9_]*)+$/.test(
+              data.packageName.trim(),
+            )
+          )
+            throw new SetupFailure(
+              "Google credentials accepted. Enter a valid existing Android package name (for example com.company.app) for the optional app access check.",
+            );
+          await client.listReviews(data.packageName.trim(), undefined, 1);
           return reply(200, {
             message:
               "Google Play API access verified for the package (reviews permission). Release permissions are checked when used.",
@@ -277,11 +332,37 @@ export async function startSetup(open = true) {
         throw new Error();
       }
       return reply(404, { error: "Unknown action" });
-    } catch {
-      reply(400, {
-        error:
-          "Connection failed. Check the selected file, required fields, profile replacement checkbox and store permissions. No credentials were logged.",
-      });
+    } catch (error) {
+      // Only locally authored messages and numeric provider status are safe to return.
+      let message =
+        "Connection failed. Check the selected credential file and retry. No credentials were logged.";
+      if (error instanceof SetupFailure) message = error.message;
+      else {
+        const status =
+          error instanceof ApiFailure
+            ? error.status
+            : (error as any)?.response?.status;
+        if (status === 401)
+          message =
+            "Store rejected authentication (401). For Apple, match Key ID and .p8 file, and choose Team or Individual according to where the API key was created (not your developer account type). Team keys also require the matching Issuer ID. Save the connection before checking again.";
+        else if (status === 403)
+          message =
+            "Store denied this access check (403). For Google, enable the Android Publisher API in the key's Cloud project and grant the service account app access and reviews permission in Play Console. For Apple, check the API key role and app access.";
+        else if (status === 404)
+          message =
+            "App not found or not accessible (404). Check the existing Android package name and Play Console app permissions.";
+        else if (status === 429)
+          message = "Store rate limit reached (429). Wait briefly and retry.";
+        else if (typeof status === "number")
+          message = `Store request failed (HTTP ${status}). Retry or check the store service status.`;
+        else if (
+          error instanceof Error &&
+          ["TimeoutError", "AbortError"].includes(error.name)
+        )
+          message =
+            "Store request timed out. The setup window is still available; retry the check.";
+      }
+      reply(400, { error: message });
     }
   });
   await new Promise<void>((resolve) => server.listen(0, "127.0.0.1", resolve));
@@ -289,12 +370,9 @@ export async function startSetup(open = true) {
   origin = `http://127.0.0.1:${address.port}`;
   const url = origin + "/?token=" + token;
   console.error(
-    "App Publisher setup is open locally for 15 minutes. Close with Ctrl-C.",
+    "App Publisher setup is open locally until you choose Finish setup or press Ctrl-C.",
   );
   if (open) openBrowser(url);
-  const timer = setTimeout(() => server.close(), 15 * 60_000);
-  timer.unref();
-  server.on("close", () => clearTimeout(timer));
   return { server, url };
 }
 const html = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Connect App Publisher</title><style>
@@ -302,12 +380,18 @@ const html = `<!doctype html><html lang="en"><meta charset="utf-8"><meta name="v
 <main><header><span class="tag">APP PUBLISHER / LOCAL SETUP</span><h1>Connect your stores.</h1><p>Choose the downloaded key file. App Publisher saves it privately on this computer.<br>No secrets in chat, no config editing, no app is published during setup.</p></header>
 <label for="profile">Account profile</label><input id="profile" value="default" maxlength="64" pattern="[a-zA-Z0-9_-]+"><label><input type="checkbox" id="replace"> Replace an existing connection for this profile</label><p class="steps">Use one profile for multiple apps in the same account. Create another profile for another account.</p>
 <div class="grid"><section class="card"><h2>Apple App Store</h2><p>Apple uses API keys rather than a browser OAuth sign-in.</p><a class="link secondary" href="https://appstoreconnect.apple.com/access/integrations/api" target="_blank" rel="noreferrer">Open Apple API keys ↗</a><p class="steps">Create a key with the role your work needs and download the .p8 file. Apple shows the Issuer ID on the same page. Your account may need API access enabled first.</p>
-<label for="appleFile">Apple key (.p8)</label><input type="file" id="appleFile" accept=".p8"><label for="keyId">Key ID (filled from the filename when possible)</label><input id="keyId"><label for="keyType">Key type</label><select id="keyType"><option value="TEAM">Team key</option><option value="INDIVIDUAL">Individual key</option></select><label for="issuer">Issuer ID (team keys)</label><input id="issuer"><button id="appleConnect">Save Apple connection</button><button class="secondary" id="appleCheck">Check Apple access</button></section>
+<label for="appleFile">Apple key (.p8)</label><input type="file" id="appleFile" accept=".p8"><label for="keyId">Key ID (filled from the filename when possible)</label><input id="keyId"><label for="keyType">Key type</label><select id="keyType"><option value="TEAM">Team key</option><option value="INDIVIDUAL">Individual key</option></select><small>Team keys come from Users and Access → Integrations. Individual API keys come from your user profile. This is not your developer account type.</small><label for="issuer">Issuer ID (team keys)</label><input id="issuer"><button id="appleConnect">Save Apple connection</button><button class="secondary" id="appleCheck">Check Apple access</button></section>
 <section class="card"><h2>Google Play</h2><p>Select a service account key, or a Desktop OAuth client file to continue with Google sign-in.</p><a class="link secondary" href="https://console.cloud.google.com/apis/library/androidpublisher.googleapis.com" target="_blank" rel="noreferrer">Enable Play API ↗</a><a class="link secondary" href="https://console.cloud.google.com/iam-admin/serviceaccounts" target="_blank" rel="noreferrer">Service account keys ↗</a><a class="link secondary" href="https://console.cloud.google.com/auth/clients" target="_blank" rel="noreferrer">Desktop OAuth client ↗</a><a class="link secondary" href="https://play.google.com/console/developers/users-and-permissions" target="_blank" rel="noreferrer">Play access permissions ↗</a><p class="steps">For a service account, grant its email access in Play Console and download a JSON key. For OAuth, download a Desktop client JSON; the next step opens Google consent. Choose the correct Cloud project on linked pages.</p>
-<label for="googleFile">Google credentials (.json)</label><input type="file" id="googleFile" accept=".json"><button id="googleConnect">Connect Google</button><label for="packageName">Existing Android package for access check</label><input id="packageName" placeholder="com.example.app"><button class="secondary" id="googleCheck">Check Google access</button><small>App Publisher does not yet provide a shared verified Google OAuth client. Your first connection requires a downloaded client or service account file. Later sessions reuse the saved connection.</small></section></div><div id="status" role="status">Ready to connect. Store credentials never leave this computer except to authenticate with Apple or Google.</div><small>Changes are disabled by default. Close this window and stop the setup command when finished. Restart the Codex task after connecting.</small></main>
+<label for="googleFile">Google credentials (.json)</label><input type="file" id="googleFile" accept=".json"><button id="googleConnect">Connect Google</button><label for="packageName">Existing Android package (optional app permissions check)</label><input id="packageName" placeholder="com.example.app"><button class="secondary" id="googleCheck">Check Google access</button><small>App Publisher does not yet provide a shared verified Google OAuth client. Your first connection requires a downloaded client or service account file. Later sessions reuse the saved connection.</small></section></div><div id="status" role="status">Ready to connect. Store credentials never leave this computer except to authenticate with Apple or Google.</div><small>Changes are disabled by default. This window stays available while you create keys. Choose Finish setup when done. Restart the Codex task after connecting.</small><button class="secondary" id="finish">Finish setup</button></main>
 <script nonce="__TOKEN__">const $=id=>document.getElementById(id);const token='__TOKEN__';history.replaceState(null,'','/');
-async function post(path,data){$('status').textContent='Working…';try{const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','x-setup-token':token},body:JSON.stringify({profile:$('profile').value,replace:$('replace').checked,...data})});const result=await r.json();$('status').textContent=result.message||result.error||'Opening Google sign-in…';if(result.url)window.location.assign(result.url);}catch{$('status').textContent='Could not connect to the local setup server.'}}
+async function post(path,data){$('status').textContent='Working…';try{const r=await fetch(path,{method:'POST',headers:{'Content-Type':'application/json','x-setup-token':token},body:JSON.stringify({profile:$('profile').value,replace:$('replace').checked,...data})});const result=await r.json();if(r.ok&&path==='/connect/apple')appleDirty=false;if(r.ok&&path==='/connect/google')googleDirty=false;$('status').textContent=result.message||result.error||'Opening Google sign-in…';if(result.url)window.location.assign(result.url);}catch{$('status').textContent='The local setup server is no longer running. Ask Codex to reopen App Publisher setup; your saved connections are preserved.'}}
+$('keyType').onchange=()=>{$('issuer').disabled=$('keyType').value==='INDIVIDUAL'};
+$('finish').onclick=()=>post('/close',{});
 $('appleFile').onchange=()=>{const match=$('appleFile').files[0]?.name.match(/AuthKey_([A-Za-z0-9]+)\\.p8$/);if(match)$('keyId').value=match[1]};
 $('appleConnect').onclick=async()=>{const f=$('appleFile').files[0];if(!f){$('status').textContent='Choose the Apple .p8 file first.';return}await post('/connect/apple',{key:await f.text(),keyId:$('keyId').value,issuerId:$('issuer').value,keyType:$('keyType').value})};
 $('googleConnect').onclick=async()=>{const f=$('googleFile').files[0];if(!f){$('status').textContent='Choose a Google JSON credential file first.';return}await post('/connect/google',{key:await f.text()})};
-$('appleCheck').onclick=()=>post('/check',{platform:'apple'});$('googleCheck').onclick=()=>post('/check',{platform:'google',packageName:$('packageName').value});</script></html>`;
+let appleDirty=false,googleDirty=false;
+for(const id of ['appleFile','keyId','keyType','issuer'])$(id).addEventListener('change',()=>appleDirty=true);
+$('googleFile').addEventListener('change',()=>googleDirty=true);
+$('appleCheck').onclick=()=>{if(appleDirty){$('status').textContent='Save the selected Apple connection first, then check access. Select Replace connection if this profile already has a saved key.';return}post('/check',{platform:'apple'})};
+$('googleCheck').onclick=()=>{if(googleDirty){$('status').textContent='Connect the selected Google file first, then check access.';return}post('/check',{platform:'google',packageName:$('packageName').value})};</script></html>`;

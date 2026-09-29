@@ -40,3 +40,5 @@ Calls emit structured JSON. Exit status 1 means failure. No raw provider excepti
 ## Portable local launcher
 
 Some Codex versions do not expand plugin-root placeholders in MCP arguments. `npm run configure` writes a mode-600 runtime.json beside the default config, pointing to the built CLI in this installation. The bundled launcher reads that pointer instead of relying on cache paths or shell interpolation. Run configure again after an upgrade; the setup skill does this automatically. APP_PUBLISHER_RUNTIME can override the pointer location for tests or custom installations. This file contains a local executable path, not credentials.
+
+The setup wizard stays open until **Finish setup** or Ctrl-C. Checks use saved connections, so save a newly selected key before checking. Apple key type refers to the API key: keys created under Users and Access → Integrations → Team Keys need Issuer ID, even for an individual developer account. Google authentication can be verified without a package name; an optional existing package adds a Play API/reviews permission check, not a release permission guarantee.

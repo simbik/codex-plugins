@@ -7,7 +7,7 @@ Use the bundled local setup wizard. Never ask the user to paste a key, refresh t
 
 Resolve the plugin root as two directories above this skill file. Run commands in that root, not the user's app repository. Requires Node.js 22 or later. On first use run `npm ci --ignore-scripts` and `npm run build`, then `npm run configure`; both are local setup steps with dependencies locked in package-lock.json. Do not download or execute third-party install scripts.
 
-Run `node dist/cli.js setup`. It opens a loopback browser wizard with direct Apple and Google console links, file selectors, profile names and access-check buttons. Let the user interact with provider login, consent and credential file selection themselves. Keep the process running while they connect. Do not read the saved credential files.
+Run `node dist/cli.js setup`. It opens a loopback browser wizard with direct Apple and Google console links, file selectors, profile names and access-check buttons. Let the user interact with provider login, consent and credential file selection themselves. Keep the process running while they connect, including between agent turns (launch it as a detached process when your command runner does not preserve foreground processes). The wizard has no expiry timer. The user can stop it with Finish setup. Do not read the saved credential files.
 
 Apple: the wizard imports a downloaded .p8 and infers Key ID from the filename. Team keys additionally need Issuer ID from the linked Apple page. Apple has no equivalent user OAuth sign-in for this API.
 
@@ -15,6 +15,6 @@ Google: importing a Desktop OAuth client JSON opens Google consent with PKCE; im
 
 Profiles represent accounts, not individual apps. One profile can serve all apps permitted by that account. Use another profile for another account. Profile selection is not an app-level authorization sandbox.
 
-Run `node dist/cli.js doctor` for credential-presence checks without revealing values. It does not verify network access. The wizard has separate access checks. Once setup/build finishes, start a new Codex task if MCP tools were unavailable at startup. CLI fallback is `node dist/cli.js schema TOOL` then `node dist/cli.js call TOOL /absolute/args.json`; keep argument files private.
+Run `node dist/cli.js doctor` for credential-presence checks without revealing values. It does not verify network access. The wizard checks saved connections; save or connect a newly selected file first. Apple Team keys come from Users and Access → Integrations and need Issuer ID even for an individual developer account. Google can check authentication without a package name; entering an existing Android package additionally checks Play API and reviews permissions. Once setup/build finishes, start a new Codex task if MCP tools were unavailable at startup. CLI fallback is `node dist/cli.js schema TOOL` then `node dist/cli.js call TOOL /absolute/args.json`; keep argument files private.
 
 See [configuration](../../docs/configuration.md) for paths and write-session controls, or [privacy](../../PRIVACY.md) for data handling.
