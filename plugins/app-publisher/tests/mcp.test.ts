@@ -36,3 +36,35 @@ test("built MCP server initializes, lists schema/annotations and blocks writes o
     await client.close();
   }
 });
+
+test("packaged MCP bootstrap starts from an unrelated cwd using configured runtime pointer", async () => {
+  const { mkdtempSync, writeFileSync, rmSync, readFileSync } =
+    await import("node:fs");
+  const { tmpdir } = await import("node:os");
+  const { join, resolve } = await import("node:path");
+  const dir = mkdtempSync(join(tmpdir(), "app-publisher-bootstrap-"));
+  try {
+    const pointer = join(dir, "runtime.json");
+    writeFileSync(pointer, JSON.stringify({ server: resolve("dist/cli.js") }), {
+      mode: 0o600,
+    });
+    const definition = JSON.parse(readFileSync(".mcp.json", "utf8")).mcpServers[
+      "app-publisher"
+    ];
+    const transport = new StdioClientTransport({
+      ...definition,
+      cwd: dir,
+      env: { PATH: process.env.PATH!, APP_PUBLISHER_RUNTIME: pointer },
+      stderr: "pipe",
+    });
+    const client = new Client({ name: "bootstrap-test", version: "1.0.0" });
+    try {
+      await client.connect(transport);
+      assert.equal((await client.listTools()).tools.length, tools.length);
+    } finally {
+      await client.close();
+    }
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+});

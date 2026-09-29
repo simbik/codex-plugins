@@ -2,7 +2,7 @@
 
 The preferred setup is `node dist/cli.js setup` from the plugin directory. It opens a private loopback wizard and writes configuration for you. No keys belong in chat or Git.
 
-Requires Node.js 22+ and npm. On first install: `npm ci --ignore-scripts && npm run build`. Package installation does not happen automatically when the MCP server launches.
+Requires Node.js 22+ and npm. On first install: `npm ci --ignore-scripts && npm run build && npm run configure`. Package installation does not happen automatically when the MCP server launches.
 
 Configuration defaults to `~/.config/app-publisher/config.json`. `APP_PUBLISHER_CONFIG` may point to another absolute private file. Config and credentials require mode 600 on Unix; the wizard creates a mode 700 directory. Windows users must protect the directory with their account ACLs. Files are local plaintext credentials, not an OS keychain. Old credential files remain after replacement for deliberate manual cleanup; revoke obsolete keys at the provider.
 
@@ -36,3 +36,7 @@ Calls emit structured JSON. Exit status 1 means failure. No raw provider excepti
 - Google OAuth access denied: check the Cloud project's consent setup/test users and use a Desktop client. This project has no verified shared OAuth client.
 - Generic operation failure: check IDs, permissions and store state. Raw errors are deliberately withheld because they can contain credentials, review passwords or signed URLs.
 - Timeout after upload/commit: inspect the edit, build or returned recovery IDs first. Writes are never automatically retried.
+
+## Portable local launcher
+
+Some Codex versions do not expand plugin-root placeholders in MCP arguments. `npm run configure` writes a mode-600 runtime.json beside the default config, pointing to the built CLI in this installation. The bundled launcher reads that pointer instead of relying on cache paths or shell interpolation. Run configure again after an upgrade; the setup skill does this automatically. APP_PUBLISHER_RUNTIME can override the pointer location for tests or custom installations. This file contains a local executable path, not credentials.

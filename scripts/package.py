@@ -14,7 +14,7 @@ if not (plugin / 'dist/cli.js').is_file():
     raise SystemExit('Build the plugin with npm run build first.')
 args.output.mkdir(parents=True, exist_ok=True)
 paths = ['.codex-plugin', '.mcp.json', 'skills', 'scripts', 'assets', 'docs',
-         'src', 'dist', 'package.json', 'package-lock.json', 'tsconfig.json',
+         'src', 'dist', 'tests', 'package.json', 'package-lock.json', 'tsconfig.json',
          'LICENSE', 'PRIVACY.md', 'TERMS.md', 'README.md']
 archive = args.output / 'app-publisher-0.1.0.zip'
 with ZipFile(archive, 'w', ZIP_DEFLATED) as out:

@@ -18,4 +18,6 @@ This is a bounded implementation review, not a comprehensive security audit. Fil
 
 ## Release check, 2026-09-29
 
-21 automated tests passed on Node.js 24.14.0/macOS ARM64. All 44 MCP tools appeared over stdio. TypeScript checks/build, Codex plugin validation and all three skill validators passed. npm audit reported zero known vulnerabilities at the time of checking. The setup form was inspected in the Codex browser; Apple and Google missing-file errors were exercised. No provider login/consent or credential import was completed in that UI review.
+22 automated tests passed on Node.js 24.14.0/macOS ARM64. All 44 MCP tools appeared over stdio. TypeScript checks/build, Codex plugin validation and all three skill validators passed. npm audit reported zero known vulnerabilities at the time of checking. The setup form was inspected in the Codex browser; Apple and Google missing-file errors were exercised. No provider login/consent or credential import was completed in that UI review.
+
+The packaged bootstrap also passed an MCP handshake from an unrelated working directory using a temporary runtime pointer. This covers Codex versions that leave plugin-root placeholders unexpanded. GitHub Actions independently passed the first 21-test suite on Node.js 22/Linux; the final 22-test run is linked from the release.

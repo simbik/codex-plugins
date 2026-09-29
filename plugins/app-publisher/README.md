@@ -5,6 +5,7 @@ Requires Node.js 22+ and npm. Run these commands in this directory:
 ```sh
 npm ci --ignore-scripts
 npm run build
+npm run configure
 node dist/cli.js setup
 ```
 

@@ -5,7 +5,7 @@ description: Connect Apple App Store Connect or Google Play accounts to App Publ
 
 Use the bundled local setup wizard. Never ask the user to paste a key, refresh token, client secret or service account JSON into chat.
 
-Resolve the plugin root as two directories above this skill file. Run commands in that root, not the user's app repository. Requires Node.js 22 or later. On first use run `npm ci --ignore-scripts` and `npm run build`; both are local setup steps with dependencies locked in package-lock.json. Do not download or execute third-party install scripts.
+Resolve the plugin root as two directories above this skill file. Run commands in that root, not the user's app repository. Requires Node.js 22 or later. On first use run `npm ci --ignore-scripts` and `npm run build`, then `npm run configure`; both are local setup steps with dependencies locked in package-lock.json. Do not download or execute third-party install scripts.
 
 Run `node dist/cli.js setup`. It opens a loopback browser wizard with direct Apple and Google console links, file selectors, profile names and access-check buttons. Let the user interact with provider login, consent and credential file selection themselves. Keep the process running while they connect. Do not read the saved credential files.
 

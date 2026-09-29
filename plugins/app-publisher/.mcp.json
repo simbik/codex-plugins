@@ -2,7 +2,10 @@
   "mcpServers": {
     "app-publisher": {
       "command": "node",
-      "args": ["${CLAUDE_PLUGIN_ROOT}/scripts/launch.mjs"]
+      "args": [
+        "-e",
+        "try{const fs=require('node:fs'),p=require('node:path'),u=require('node:url');const f=process.env.APP_PUBLISHER_RUNTIME||p.join(require('node:os').homedir(),'.config','app-publisher','runtime.json');const r=JSON.parse(fs.readFileSync(f,'utf8'));if(!p.isAbsolute(r.server))throw Error();process.argv=[process.execPath,r.server,'serve'];import(u.pathToFileURL(r.server).href).catch(()=>{console.error('App Publisher needs setup. Use the app-publisher-setup skill.');process.exitCode=1;});}catch{console.error('App Publisher needs setup. Use the app-publisher-setup skill.');process.exitCode=1;}"
+      ]
     }
   }
 }

@@ -22,6 +22,7 @@ git clone https://github.com/simbik/app-publisher.git
 cd app-publisher/plugins/app-publisher
 npm ci --ignore-scripts
 npm run build
+npm run configure
 node dist/cli.js setup
 ```
 
